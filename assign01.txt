@@ -1,9 +1,9 @@
 Exercise 1: System call IDT entry
 
-Set a breakpoint at mpmain and continue until breakpoint is hit
-Step over until after after idtinit has completed (line 56)
-Go to QEMU and get the value of IDT register with info registers
-Inspect value in memory
+1. Set a breakpoint at mpmain and continue until breakpoint is hit
+2. Step over until after after idtinit has completed (line 56)
+3. Go to QEMU and get the value of IDT register with info registers
+4. Inspect value in memory
 
 IDT=     80114ca0 000007ff
 
@@ -59,3 +59,89 @@ Segment selector: 0x0008
 Offset: 0x5a8d
 
 The only difference between this gate and the others is the last 3 hex digits. Looking it up in the manual, this is the GDT/LDT offset.
+
+Exercise 2
+
+1. Set a breakpoint at syscall (b syscall) and continue until breakpoint is hit
+2. Step over until after num is assigned (line 138).
+3. Examine the contents of num
+
+(gdb) p num
+$1 = 7
+
+Thus we know the syscall is the 7th in the table in syscall.c, or sys_exec.
+
+(gdb) p curproc
+$2 = (struct proc *) 0x80112d54 <ptable+52>
+(gdb) p *curproc
+$3 = {sz = 4096, pgdir = 0x8dffe000, kstack = 0x8dfff000 "", state = RUNNING,
+pid = 1, parent = 0x0, tf = 0x8dffffb4, context = 0x8dfffea0, chan = 0x0,
+killed = 0, ofile = {0x0 <repeats 16 times>}, cwd = 0x80110a14 <icache+52>,
+name = "initcode\000\000\000\000\000\000\000"}
+(gdb) info reg
+eax            0x7      7
+ecx            0x1      1
+edx            0x0      0
+ebx            0x80112d54       -2146357932
+esp            0x8dffff40       0x8dffff40
+ebp            0x8dffff58       0x8dffff58
+esi            0x8dffffb4       -1912602700
+edi            0x0      0
+eip            0x80104685       0x80104685 <syscall+21>
+eflags         0x282    [ SF IF ]
+cs             0x8      8
+kstack = 0x8dfff000 refers to the absolute minimum address of the stack. KSTACKSIZE is defined to be 4096, in param.h.
+
+Thus the “bottom” of the stack (highest memory address) is kstack + KSTACKSIZE = 0x8e000000. The allocated portion is everything “below” (higher memory address) %esp.
+
+We will examine the memory in word size with x /4wx $esp.
+
+(gdb) x /4wx $esp
+0x8dffff40:     0x8dffffb4    
+                0x00000000
+                0x8dffff58
+                0x801036cc
+0x8dffff50:     0x8dffffb4    
+                0x00000000    
+                0x8dffffa8    
+                0x80105699    
+0x8dffff60:     0x8010151c    
+                0x80106d78
+                0x000003e8
+                0x000003ad
+0x8dffff70:     0x000000c8
+                0x0000001e
+                0x00000002
+                0x00000020
+0x8dffff80:     0x0000003a
+                0x00000000
+                0x00000000
+                0x8dffffac
+0x8dffff90:     0x801035e2
+                0x00000001
+                0x01010101
+                0x00000000      <- edi also curproc->context
+0x8dffffa0:     0x00000000      <- esi
+                0x00000000      <- ebx
+                0x00000000      <- ebp
+                0x801053e2      <- forkret
+0x8dffffb0:     0x8dffffb4      <- trapret
+                0x00000000      <- edi also curproc->tf
+                0x00000000      <- esi
+                0x00000000      <- ebp
+0x8dffffc0:     0x8dffffd4      <- oesp
+                0x00000000      <- ebx
+                0x00000000      <- edx
+                0x00000000      <- ecx
+0x8dffffd0:     0x00000007      <- eax
+                0x00000000      <- gs
+                0x00000000      <- fs
+                0x00000023      <- es
+0x8dffffe0:     0x00000023      <- ds
+                0x00000040      <- trapno
+                0x00000000      <- err
+                0x00000013      <- eip
+0x8dfffff0:     0x0000001b      <- cs
+                0x00000202      <- eflags
+                0x00000ff4      <- esp
+                0x00000023      <- ss
