@@ -54,7 +54,9 @@ Inspect the next 64 8-byte values starting at address 0x80114ca0 with x/64gx 0x8
 Offset: 0x8010
 Segment present: 1
 DPL: 00
+    00 refers to highest descriptor privilege level
 D: 1
+    32 bit gate size
 Segment selector: 0x0008
 Offset: 0x5a8d
 
@@ -97,11 +99,11 @@ Thus the “bottom” of the stack (highest memory address) is kstack + KSTACKSI
 We will examine the memory in word size with x /4wx $esp.
 
 (gdb) x /4wx $esp
-0x8dffff40:     0x8dffffb4    
+0x8dffff40:     0x8dffffb4      <- trapret
                 0x00000000
                 0x8dffff58
                 0x801036cc
-0x8dffff50:     0x8dffffb4    
+0x8dffff50:     0x8dffffb4      <- trapret
                 0x00000000    
                 0x8dffffa8    
                 0x80105699    
@@ -145,3 +147,30 @@ We will examine the memory in word size with x /4wx $esp.
                 0x00000202      <- eflags
                 0x00000ff4      <- esp
                 0x00000023      <- ss
+
+Exercise 3
+
+Set a breakpoint at swtch and continue until breakpoint is hit.
+
+The stack pointer is %esp. Inspect the top 3 words on the stack with x /3wx $esp.
+
+(gdb) x /3wx $esp
+0x8010b54c:     0x801039e0      <- eip
+                0x80112784      <- cs
+                0x8dffff9c      <- eflags
+
+Step past and over movl %edx, %esp. Inspect the top 6 words on the stack with x /6wx $esp.
+
+0x8dffff9c:     0x00000000      <- eip
+                0x00000000      <- cs
+                0x00000000      <- eflags
+                0x00000000      <- esp
+0x8dffffac:     0x801035a0      <- ss
+                0x801053e5      
+
+Exercise 4
+
+Place a breakpoint at syscall and continue until breakpoint is hit.
+Step over until after syscall handler is called (past line 139).
+
+
