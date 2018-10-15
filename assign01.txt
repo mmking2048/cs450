@@ -99,11 +99,11 @@ Thus the “bottom” of the stack (highest memory address) is kstack + KSTACKSI
 We will examine the memory in word size with x /4wx $esp.
 
 (gdb) x /4wx $esp
-0x8dffff40:     0x8dffffb4      <- trapret
+0x8dffff40:     0x8dffffb4
                 0x00000000
                 0x8dffff58
                 0x801036cc
-0x8dffff50:     0x8dffffb4      <- trapret
+0x8dffff50:     0x8dffffb4
                 0x00000000    
                 0x8dffffa8    
                 0x80105699    
@@ -122,7 +122,7 @@ We will examine the memory in word size with x /4wx $esp.
 0x8dffff90:     0x801035e2
                 0x00000001
                 0x01010101
-                0x00000000      <- edi also curproc->context
+                0x00000000      <- edi
 0x8dffffa0:     0x00000000      <- esi
                 0x00000000      <- ebx
                 0x00000000      <- ebp
@@ -155,17 +155,17 @@ Set a breakpoint at swtch and continue until breakpoint is hit.
 The stack pointer is %esp. Inspect the top 3 words on the stack with x /3wx $esp.
 
 (gdb) x /3wx $esp
-0x8010b54c:     0x801039e0      <- eip
-                0x80112784      <- cs
-                0x8dffff9c      <- eflags
+0x8010b54c:     0x801039e0
+                0x80112784
+                0x8dffff9c
 
 Step past and over movl %edx, %esp. Inspect the top 6 words on the stack with x /6wx $esp.
 
-0x8dffff9c:     0x00000000      <- eip
-                0x00000000      <- cs
-                0x00000000      <- eflags
-                0x00000000      <- esp
-0x8dffffac:     0x801035a0      <- ss
+0x8dffff9c:     0x00000000
+                0x00000000
+                0x00000000
+                0x00000000
+0x8dffffac:     0x801035a0
                 0x801053e5      
 
 Exercise 4
@@ -173,4 +173,46 @@ Exercise 4
 Place a breakpoint at syscall and continue until breakpoint is hit.
 Step over until after syscall handler is called (past line 139).
 
+Page directory is size 1K, page tables are size 1K, pages are size 4K.
 
+The page directory is located at *curproc->pgdir.
+
+(gdb) p *curproc
+$8 = {sz = 12288, pgdir = 0x8dfbb000, kstack = 0x8dfff000 "",
+state = RUNNING, pid = 1, parent = 0x0, tf = 0x8dffffb4,
+context = 0x8dfffc1c, chan = 0x0, killed = 0, ofile = {
+0x0 <repeats 16 times>}, cwd = 0x80110a14 <icache+52>,
+name = "init\000\000de\000\000\000\000\000\000\000"}
+
+The address space is 12288 bytes, as seen in curproc->sz.
+
+Thus look in memory address 0x8dfbb000. 1K page directory means 2^10/4 = 256 words Examine it with x /256wx curproc->pgdir.
+
+Memory is empty except the first location.
+
+0x8dfbb000:     0x0df79007      0x00000000      0x00000000      0x00000000
+
+The page directory was originally cleared out, so empty memory means the page table was not allocated. Therefore, there is only one page table allocated.
+
+Translating the page table address from virtual to real, we get 0x8df79007. Looking at the memory at this address, we see
+
+(gdb) x /4wx 0x8df79007
+0x8df79007:     0xf770070d      0x0000000d      0x00000000      0x00000000
+
+Thus there are 2 4K pages allocated, for a total of 8K.
+
+Examining the next 12 instructions using $eip,
+
+(gdb) x /12wi $eip
+=> 0x8010469d <syscall+45>:     add    $0x10,%esp
+   0x801046a0 <syscall+48>:     pop    %ebx
+   0x801046a1 <syscall+49>:     pop    %esi
+   0x801046a2 <syscall+50>:     pop    %ebp
+   0x801046a3 <syscall+51>:     ret
+   0x801046a4 <syscall+52>:     lea    0x0(%esi,%eiz,1),%esi
+   0x801046a8 <syscall+56>:     mov    %eax,0xc(%esp)
+   0x801046ac <syscall+60>:     lea    0x6c(%ebx),%eax
+   0x801046af <syscall+63>:     mov    %eax,0x8(%esp)
+   0x801046b3 <syscall+67>:     mov    0x10(%ebx),%eax
+   0x801046b6 <syscall+70>:     movl   $0x801072b1,(%esp)
+   0x801046bd <syscall+77>:     mov    %eax,0x4(%esp)
