@@ -1,3 +1,4 @@
+28/32
 Exercise 1: System call IDT entry
 
 1. Set a breakpoint at mpmain and continue until breakpoint is hit
@@ -98,7 +99,7 @@ Thus the “bottom” of the stack (highest memory address) is kstack + KSTACKSI
 
 We will examine the memory in word size with x /4wx $esp.
 
-(gdb) x /4wx $esp
+(gdb) x /4wx $esp <-----------The analysis above is correct, but why you print out 4 words?(-2)
 0x8dffff40:     0x8dffffb4
                 0x00000000
                 0x8dffff58
@@ -200,7 +201,7 @@ Translating the page table address from virtual to real, we get 0x8df79007. Look
 0x8df79007:     0xf770070d      0x0000000d      0x00000000      0x00000000
 
 Thus there are 2 4K pages allocated, for a total of 8K.
-
+<--------------------------------That answer is not correct.(-2)
 Examining the next 12 instructions using $eip,
 
 (gdb) x /12wi $eip
