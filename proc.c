@@ -532,3 +532,12 @@ procdump(void)
     cprintf("\n");
   }
 }
+
+// get number of time a given syscall has been called
+// num: syscall number (SYS_fork, for example)
+int getcount(int num)
+{
+  // struct proc *curproc = myproc();
+  // return curproc->count[num];
+  return 1;
+}
