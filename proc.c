@@ -249,6 +249,9 @@ exit(void)
 
   acquire(&ptable.lock);
 
+  // clear count table
+  memset(curproc->count, 0, sizeof curproc->count);
+
   // Parent might be sleeping in wait().
   wakeup1(curproc->parent);
 
