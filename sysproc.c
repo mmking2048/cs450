@@ -98,3 +98,8 @@ sys_getcount(void)
   struct proc *curproc = myproc();
   return curproc->count[n];
 }
+
+int sys_v2p(void)
+{
+  return 1;
+}
