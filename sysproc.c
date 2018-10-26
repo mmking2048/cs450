@@ -91,9 +91,10 @@ sys_uptime(void)
 }
 
 int
-sys_getcount(int num)
+sys_getcount(void)
 {
-  // struct proc *curproc = myproc();
-  // return curproc->count[num];
-  return 2;
+  int n;
+  argint(0, &n);
+  struct proc *curproc = myproc();
+  return curproc->count[n];
 }
