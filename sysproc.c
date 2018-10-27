@@ -101,5 +101,25 @@ sys_getcount(void)
 
 int sys_v2p(void)
 {
-  return 1;
+  int va;
+  pde_t *pde;
+  pte_t *pgtab;
+  pte_t *pte;
+
+  argint(0, &va);
+  struct proc *curproc = myproc();
+
+  // lookup pde from page directory
+  pde = &(curproc->pgdir)[PDX(va)];
+  if(*pde & PTE_P){
+    // get page table from pde
+    pgtab = (pte_t*)P2V(PTE_ADDR(*pde));
+    // lookup pte from page table
+    pte = (pte_t*)&pgtab[PTX(va)];
+    // get physical address from pte
+    return (int)&pte[OFFSET(va)];
+  } else {
+    // page table was not allocated
+    return -1;
+  }
 }
