@@ -184,6 +184,7 @@ UPROGS=\
 	_bigtest\
 	_getcount\
 	_v2ptest\
+	_pctest\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)

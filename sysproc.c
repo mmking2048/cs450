@@ -146,5 +146,5 @@ int sys_mtxlock(void)
 
 int sys_mtxunlock(void)
 {
-  
+  return 0;
 }
