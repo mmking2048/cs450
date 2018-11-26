@@ -123,3 +123,28 @@ int sys_v2p(void)
     return -1;
   }
 }
+
+int sys_threadcreate(void)
+{
+  return 0;
+}
+
+int sys_threadjoin(void)
+{
+  return 0;
+}
+
+int sys_mtxcreate(void)
+{
+  return 0;
+}
+
+int sys_mtxlock(void)
+{
+  return 0;
+}
+
+int sys_mtxunlock(void)
+{
+  
+}

@@ -22,3 +22,8 @@
 #define SYS_close       21
 #define SYS_getcount    22
 #define SYS_v2p         23
+#define SYS_tcreate     24
+#define SYS_tjoin       25
+#define SYS_mtxcreate   26
+#define SYS_mtxlock     27
+#define SYS_mtxunlock   28
