@@ -3,6 +3,6 @@
 
 int main()
 {
-    printf(1, "thread_create: %d\n", thread_create());
+    //printf(1, "thread_create: %d\n", thread_create());
     exit();
 }

@@ -25,16 +25,11 @@ int sleep(int);
 int uptime(void);
 int getcount(int);
 int v2p(int);
-// int thread_create(void (*tmain)(void *), void *stack, void *arg);
-// int thread_join(void **stack);
-// int mtx_create(int locked);
-// int mtx_lock(int lock_id);
-// int mtx_unlock(int lock_id);
-int thread_create(void);
-int thread_join(void);
-int mtx_create(void);
-int mtx_lock(void);
-int mtx_unlock(void);
+int thread_create(void (*tmain)(void *), void *stack, void *arg);
+int thread_join(void **stack);
+int mtx_create(int locked);
+int mtx_lock(int lock_id);
+int mtx_unlock(int lock_id);
 
 // ulib.c
 int stat(const char*, struct stat*);

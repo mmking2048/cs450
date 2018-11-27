@@ -6,6 +6,7 @@
 #include "memlayout.h"
 #include "mmu.h"
 #include "proc.h"
+#include "spinlock.h"
 
 int
 sys_fork(void)
@@ -136,15 +137,50 @@ int sys_threadjoin(void)
 
 int sys_mtxcreate(void)
 {
-  return 0;
+  int locked;
+  argint(0, &locked);
+  
+  struct proc *curproc = myproc();
+  struct spinlock lock;
+  int lockid = curproc->lockid;
+  curproc->lockid++;
+
+  if (lockid > NOLOCK)
+    // too many locks
+    return -1;
+
+  initlock(&lock, "mutex");
+  lock.locked = locked;
+  curproc->locks[lockid] = &lock;
+  return lockid;
 }
 
 int sys_mtxlock(void)
 {
+  int lock_id;
+  argint(0, &lock_id);
+
+  struct proc *curproc = myproc();
+  if (lock_id > curproc->lockid)
+    // invalid lock number
+    return -1;
+
+  struct spinlock *lock = curproc->locks[lock_id];
+  acquire(lock);
   return 0;
 }
 
 int sys_mtxunlock(void)
 {
+  int lock_id;
+  argint(0, &lock_id);
+
+  struct proc *curproc = myproc();
+  if (lock_id > curproc->lockid)
+    // invalid lock number
+    return -1;
+
+  struct spinlock *lock = curproc->locks[lock_id];
+  release(lock);
   return 0;
 }
