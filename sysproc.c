@@ -127,60 +127,38 @@ int sys_v2p(void)
 
 int sys_threadcreate(void)
 {
-  return 0;
+  void (*tmain)(void *);
+  void *stack, *arg;
+  argptr(0, (void*)&tmain, sizeof(tmain));
+  argptr(1, (void*)&stack, sizeof(stack));
+  argptr(2, (void*)&arg, sizeof(arg));
+  return thread_create(tmain, stack, arg);
 }
 
 int sys_threadjoin(void)
 {
-  return 0;
+  void **stack;
+  argptr(0, (void*)&stack, sizeof(stack));
+  return thread_join(stack);
 }
 
 int sys_mtxcreate(void)
 {
   int locked;
   argint(0, &locked);
-  
-  struct proc *curproc = myproc();
-  struct spinlock lock;
-  int lockid = curproc->lockid;
-  curproc->lockid++;
-
-  if (lockid > NOLOCK)
-    // too many locks
-    return -1;
-
-  initlock(&lock, "mutex");
-  lock.locked = locked;
-  curproc->locks[lockid] = &lock;
-  return lockid;
+  return mtx_create(locked);
 }
 
 int sys_mtxlock(void)
 {
   int lock_id;
   argint(0, &lock_id);
-
-  struct proc *curproc = myproc();
-  if (lock_id > curproc->lockid)
-    // invalid lock number
-    return -1;
-
-  struct spinlock *lock = curproc->locks[lock_id];
-  acquire(lock);
-  return 0;
+  return mtx_lock(lock_id);
 }
 
 int sys_mtxunlock(void)
 {
   int lock_id;
   argint(0, &lock_id);
-
-  struct proc *curproc = myproc();
-  if (lock_id > curproc->lockid)
-    // invalid lock number
-    return -1;
-
-  struct spinlock *lock = curproc->locks[lock_id];
-  release(lock);
-  return 0;
+  return mtx_unlock(lock_id);
 }

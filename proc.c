@@ -535,3 +535,91 @@ procdump(void)
     cprintf("\n");
   }
 }
+
+int thread_create(void (*tmain)(void *), void *stack, void *arg) {
+  int i, pid;
+  struct proc *np;
+  struct proc *curproc = myproc();
+
+  // Allocate process.
+  if((np = allocproc()) == 0){
+    return -1;
+  }
+
+  // share process state instead of making a copy
+  np->pgdir = curproc->pgdir;
+  np->sz = curproc->sz;
+  np->parent = curproc;
+  *np->tf = *curproc->tf;
+
+  // Clear %eax so that fork returns 0 in the child.
+  np->tf->eax = 0;
+
+  // make a copy of open files table
+  for(i = 0; i < NOFILE; i++)
+    if(curproc->ofile[i])
+      np->ofile[i] = filedup(curproc->ofile[i]);
+
+  // make a copy of current open directory
+  np->cwd = idup(curproc->cwd);
+
+  // copy name of process
+  safestrcpy(np->name, curproc->name, sizeof(curproc->name));
+
+  pid = np->pid;
+
+  acquire(&ptable.lock);
+
+  // thread is runnable
+  np->state = RUNNABLE;
+
+  release(&ptable.lock);
+
+  return pid;
+}
+
+int thread_join(void **stack)
+{
+  return 0;
+}
+
+int mtx_create(int locked)
+{
+  struct proc *curproc = myproc();
+  struct spinlock lock;
+  int lockid = curproc->lockid;
+  curproc->lockid++;
+
+  if (lockid > NOLOCK)
+    // too many locks
+    return -1;
+
+  initlock(&lock, "mutex");
+  lock.locked = locked;
+  curproc->locks[lockid] = &lock;
+  return lockid;
+}
+
+int mtx_lock(int lock_id)
+{
+  struct proc *curproc = myproc();
+  if (lock_id > curproc->lockid)
+    // invalid lock number
+    return -1;
+
+  struct spinlock *lock = curproc->locks[lock_id];
+  acquire(lock);
+  return 0;
+}
+
+int mtx_unlock(int lock_id)
+{
+  struct proc *curproc = myproc();
+  if (lock_id > curproc->lockid)
+    // invalid lock number
+    return -1;
+
+  struct spinlock *lock = curproc->locks[lock_id];
+  release(lock);
+  return 0;
+}
