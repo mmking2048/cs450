@@ -538,6 +538,7 @@ procdump(void)
 
 int thread_create(void (*tmain)(void *), void *stack, void *arg) {
   int i, pid;
+  uint ustack[2];
   struct proc *np;
   struct proc *curproc = myproc();
 
@@ -554,6 +555,25 @@ int thread_create(void (*tmain)(void *), void *stack, void *arg) {
 
   // Clear %eax so that fork returns 0 in the child.
   np->tf->eax = 0;
+
+  // set stack
+  np->tf->esp = (uint)stack;
+
+  // set function
+  np->tf->eip = (uint)tmain;
+
+  // set arguments
+  // *arg means only one argument
+  // fake return PC
+  ustack[0] = 0xffffffff;
+  ustack[1] = (uint)arg;
+
+  // two words = 8 bytes
+  // adjust stack pointer to include size of ustack
+  np->tf->esp -= 8;
+
+  // copy arguments to stack
+  copyout(np->pgdir, np->tf->esp, ustack, 8);
 
   // make a copy of open files table
   for(i = 0; i < NOFILE; i++)
@@ -603,7 +623,7 @@ int mtx_create(int locked)
 int mtx_lock(int lock_id)
 {
   struct proc *curproc = myproc();
-  if (lock_id > curproc->lockid)
+  if (lock_id >= curproc->lockid)
     // invalid lock number
     return -1;
 
@@ -615,7 +635,7 @@ int mtx_lock(int lock_id)
 int mtx_unlock(int lock_id)
 {
   struct proc *curproc = myproc();
-  if (lock_id > curproc->lockid)
+  if (lock_id >= curproc->lockid)
     // invalid lock number
     return -1;
 
