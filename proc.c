@@ -12,6 +12,11 @@ struct {
   struct proc proc[NPROC];
 } ptable;
 
+struct {
+  struct spinlock lock;
+  struct mutex locks[NOLOCK];
+} ltable;
+
 static struct proc *initproc;
 
 int nextpid = 1;
@@ -642,41 +647,52 @@ int thread_join(void **stack)
 
 int mtx_create(int locked)
 {
-  struct proc *curproc = myproc();
-  struct spinlock lock;
-  int lockid = curproc->lockid;
-  curproc->lockid++;
+  int i;
+  struct mutex *mutex;
 
-  if (lockid > NOLOCK)
-    // too many locks
-    return -1;
+  // look for unused slot in table
+  acquire(&ltable.lock);
 
-  initlock(&lock, "mutex");
-  lock.locked = locked;
-  curproc->locks[lockid] = &lock;
-  return lockid;
+  for (i = 0; i < NOLOCK; i++)
+  {
+    mutex = &ltable.locks[i];
+    if (mutex->used == 0)
+      goto found;
+  }
+
+  release(&ltable.lock);
+  return -1;
+
+  found:
+    // set lock to used
+    mutex->used = 1;
+    // initialize lock
+    initlock(&(mutex->lock), "mutex");
+    // set initial lock state
+    mutex->lock.locked = locked;
+
+    release(&ltable.lock);
+    return i;
 }
 
 int mtx_lock(int lock_id)
 {
-  struct proc *curproc = myproc();
-  if (lock_id >= curproc->lockid)
+  if (lock_id >= NOLOCK)
     // invalid lock number
     return -1;
 
-  struct spinlock *lock = curproc->locks[lock_id];
-  acquire(lock);
+  struct mutex mutex = ltable.locks[lock_id];
+  acquire(&mutex.lock);
   return 0;
 }
 
 int mtx_unlock(int lock_id)
 {
-  struct proc *curproc = myproc();
-  if (lock_id >= curproc->lockid)
+  if (lock_id >= NOLOCK)
     // invalid lock number
     return -1;
 
-  struct spinlock *lock = curproc->locks[lock_id];
-  release(lock);
+  struct mutex mutex = ltable.locks[lock_id];
+  release(&mutex.lock);
   return 0;
 }

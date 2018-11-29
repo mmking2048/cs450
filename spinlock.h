@@ -9,3 +9,8 @@ struct spinlock {
                      // that locked the lock.
 };
 
+struct mutex {
+  struct spinlock lock;
+  int used;          // boolean value
+};
+

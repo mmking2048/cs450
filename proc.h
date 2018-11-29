@@ -50,8 +50,6 @@ struct proc {
   struct inode *cwd;              // Current directory
   char name[16];                  // Process name (debugging)
   int count[30];                  // syscall counts
-  struct spinlock *locks[NOLOCK]; // mutexes
-  int lockid;                     // next available lock id
 };
 
 // Process memory is laid out contiguously, low addresses first:
