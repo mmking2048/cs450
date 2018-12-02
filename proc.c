@@ -563,7 +563,10 @@ int thread_create(void (*tmain)(void *), void *stack, void *arg) {
   np->tf->eax = 0;
 
   // set stack
-  np->tf->esp = (uint)stack;
+  np->tf->esp = (uint)stack + PGSIZE;
+
+  // save pointer to stack for freeing
+  np->tstack = stack;
 
   // set function
   np->tf->eip = (uint)tmain;
@@ -571,15 +574,14 @@ int thread_create(void (*tmain)(void *), void *stack, void *arg) {
   // set arguments
   // *arg means only one argument
   // fake return PC
-  ustack[0] = 0xffffffff;
+  ustack[0] = 0xFFFFFFFF;
   ustack[1] = (uint)arg;
 
-  // two words = 8 bytes
   // adjust stack pointer to include size of ustack
-  np->tf->esp -= 8;
+  np->tf->esp -= 2 * sizeof(uint);
 
   // copy arguments to stack
-  copyout(np->pgdir, np->tf->esp, ustack, 8);
+  copyout(np->pgdir, np->tf->esp, ustack, 2 * sizeof(uint));
 
   // make a copy of open files table
   for(i = 0; i < NOFILE; i++)
@@ -594,11 +596,9 @@ int thread_create(void (*tmain)(void *), void *stack, void *arg) {
 
   pid = np->pid;
 
-  acquire(&ptable.lock);
-
   // thread is runnable
+  acquire(&ptable.lock);
   np->state = RUNNABLE;
-
   release(&ptable.lock);
 
   return pid;
@@ -628,7 +628,7 @@ int thread_join(void **stack)
         p->name[0] = 0;
         p->killed = 0;
         p->state = UNUSED;
-        stack = (void **)(p->tf->esp);
+        *stack = p->tstack;
         release(&ptable.lock);
         return pid;
       }
