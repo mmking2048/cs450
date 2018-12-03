@@ -48,7 +48,7 @@ void producer(void* iterations)
     for (i = 0; i < (int)iterations; i++)
     {
         // wait for event
-        sleep((SIZE - IN) * 100);
+        sleep(1);
 
         // lock if previously unlocked (no space left)
         sem_acquire(spaces);
@@ -87,7 +87,7 @@ void consumer(void *iterations)
         sem_release(spaces);
 
         // process event
-        sleep((SIZE - OUT) * 100);
+        sleep(10);
     }
 
     exit();
