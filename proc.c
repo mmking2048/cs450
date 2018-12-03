@@ -31,6 +31,12 @@ pinit(void)
   initlock(&ptable.lock, "ptable");
 }
 
+void
+linit(void)
+{
+  initlock(&ltable.lock, "ltable");
+}
+
 // Must be called with interrupts disabled
 int
 cpuid() {
@@ -667,9 +673,9 @@ int mtx_create(int locked)
     // set lock to used
     mutex->used = 1;
     // initialize lock
-    initlock(&(mutex->lock), "mutex");
+    initlock(&mutex->lk, "mutex");
     // set initial lock state
-    mutex->lock.locked = locked;
+    mutex->locked = locked;
 
     release(&ltable.lock);
     return i;
@@ -681,8 +687,13 @@ int mtx_lock(int lock_id)
     // invalid lock number
     return -1;
 
-  struct mutex mutex = ltable.locks[lock_id];
-  acquire(&mutex.lock);
+  struct mutex *mutex = &ltable.locks[lock_id];
+  acquire(&mutex->lk);
+  while(mutex->locked)
+    sleep(mutex, &mutex->lk);
+
+  mutex->locked = 1;
+  release(&mutex->lk);
   return 0;
 }
 
@@ -692,7 +703,10 @@ int mtx_unlock(int lock_id)
     // invalid lock number
     return -1;
 
-  struct mutex mutex = ltable.locks[lock_id];
-  release(&mutex.lock);
+  struct mutex *mutex = &ltable.locks[lock_id];
+  acquire(&mutex->lk);
+  mutex->locked = 0;
+  wakeup(mutex);
+  release(&mutex->lk);
   return 0;
 }
