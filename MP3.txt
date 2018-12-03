@@ -1,0 +1,4 @@
+Buffer size is set at 10 items.
+Change the delay producer and consumer times by modifying lines 51 and 90 in file pctest.c.
+With a 1:1 ratio between the times, output will generally be producer followed by consumer.
+With a 1:5 ratio, output will generally be 10 producers followed by 1 consumer, then 1 producer followed by 1 consumer, indicating the semaphore working correctly.
