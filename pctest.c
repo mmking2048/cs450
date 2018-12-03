@@ -8,8 +8,8 @@ int IN, OUT, count, mutex, arr[SIZE];
 void *iter;
 struct semaphore *items, *spaces;
 
-void consumer(void *);
 void producer(void *);
+void consumer(void *);
 
 int main()
 {
@@ -48,7 +48,7 @@ void producer(void* iterations)
     for (i = 0; i < (int)iterations; i++)
     {
         // wait for event
-        sleep(IN);
+        sleep((SIZE - IN) * 100);
 
         // lock if previously unlocked (no space left)
         sem_acquire(spaces);
@@ -87,7 +87,7 @@ void consumer(void *iterations)
         sem_release(spaces);
 
         // process event
-        sleep(OUT);
+        sleep((SIZE - OUT) * 100);
     }
 
     exit();
