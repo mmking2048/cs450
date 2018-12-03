@@ -110,6 +110,9 @@ extern int sys_threadjoin(void);
 extern int sys_mtxcreate(void);
 extern int sys_mtxlock(void);
 extern int sys_mtxunlock(void);
+extern int sys_semcreate(void);
+extern int sys_semacquire(void);
+extern int sys_semrelease(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork]            sys_fork,
@@ -140,6 +143,9 @@ static int (*syscalls[])(void) = {
 [SYS_mtx_create]      sys_mtxcreate,
 [SYS_mtx_lock]        sys_mtxlock,
 [SYS_mtx_unlock]      sys_mtxunlock,
+[SYS_sem_create]      sys_semcreate,
+[SYS_sem_acquire]     sys_semacquire,
+[SYS_sem_release]     sys_semrelease,
 };
 
 void

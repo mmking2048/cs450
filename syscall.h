@@ -27,3 +27,6 @@
 #define SYS_mtx_create      26
 #define SYS_mtx_lock        27
 #define SYS_mtx_unlock      28
+#define SYS_sem_create      29
+#define SYS_sem_acquire     30
+#define SYS_sem_release     31

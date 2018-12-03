@@ -124,3 +124,32 @@ popcli(void)
     sti();
 }
 
+void initsemaphore(struct semaphore *s, int val)
+{
+    initlock(&s->lk, "semaphore");
+    s->val = val;   
+}
+
+void acquiresemaphore(struct semaphore *s)
+{
+    acquire(&s->lk);
+
+    while (&s->val <= 0)
+        sleep(s, &s->lk);
+    
+    s->val--;
+    release(&s->lk);
+}
+
+void releasesemaphore(struct semaphore *s)
+{
+    acquire(&s->lk);
+
+    // increment value
+    s->val++;
+    // wake up waiting processes
+    wakeup(s);
+
+    release(&s->lk);
+}
+

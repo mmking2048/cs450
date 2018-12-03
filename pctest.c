@@ -1,12 +1,12 @@
+#include "spinlock.h"
 #include "types.h"
 #include "user.h"
 
 #define SIZE 10
 
-int IN, OUT;
-int arr[SIZE];
-int mutex, items, spaces;
+int IN, OUT, count, mutex, arr[SIZE];
 void *iter;
+struct semaphore *items, *spaces;
 
 void consumer(void *);
 void producer(void *);
@@ -14,14 +14,17 @@ void producer(void *);
 int main()
 {
     // 10 iterations
-    iter = (void *)10;
+    iter = (void *)30;
+    count = 0;
 
     // mutex
     mutex = mtx_create(0);
     // does buffer have item?
-    items = mtx_create(1);
+    items = malloc(sizeof(struct semaphore));
+    sem_create(items, 0);
     // does buffer have space?
-    spaces = mtx_create(0);
+    spaces = malloc(sizeof(struct semaphore));
+    sem_create(spaces, SIZE);
 
     // create producer thread
     thread_create(producer, malloc(4096), iter);
@@ -44,17 +47,21 @@ void producer(void* iterations)
 
     for (i = 0; i < (int)iterations; i++)
     {
+        // wait for event
+        sleep(IN);
+
         // lock if previously unlocked (no space left)
-        mtx_lock(spaces);
+        sem_acquire(spaces);
 
         mtx_lock(mutex);
             arr[IN] = i;
-            IN = (IN + 1) % SIZE;
             printf(1, "Producer: %d, location: %d\n", i, IN);
+            IN = (IN + 1) % SIZE;
+            count++;
         mtx_unlock(mutex);
 
         // unlock if previously locked (there are items)
-        mtx_unlock(items);
+        sem_release(items);
     }
 
     exit();
@@ -67,16 +74,20 @@ void consumer(void *iterations)
     for (i = 0; i < (int)iterations; i++)
     {
         // lock if previously unlocked (no items)
-        mtx_lock(items);
+        sem_acquire(items);
 
         mtx_lock(mutex);
             j = arr[OUT];
-            OUT = (OUT + 1) % SIZE;
             printf(1, "Consumer: %d, location: %d\n", j, OUT);
+            OUT = (OUT + 1) % SIZE;
+            count--;
         mtx_unlock(mutex);
 
         // unlock if previously locked (there is space)
-        mtx_unlock(spaces);
+        sem_release(spaces);
+
+        // process event
+        sleep(OUT);
     }
 
     exit();

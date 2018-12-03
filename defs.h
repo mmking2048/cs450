@@ -5,6 +5,7 @@ struct inode;
 struct pipe;
 struct proc;
 struct rtcdate;
+struct semaphore;
 struct spinlock;
 struct sleeplock;
 struct stat;
@@ -126,6 +127,11 @@ int             thread_join(void **stack);
 int             mtx_create(int locked);
 int             mtx_lock(int lock_id);
 int             mtx_unlock(int lock_id);
+
+// semaphore.c
+void            initsemaphore(struct semaphore*, int);
+void            acquiresemaphore(struct semaphore*);
+void            releasesemaphore(struct semaphore*);
 
 // swtch.S
 void            swtch(struct context**, struct context*);

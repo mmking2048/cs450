@@ -162,3 +162,29 @@ int sys_mtxunlock(void)
   argint(0, &lock_id);
   return mtx_unlock(lock_id);
 }
+
+int sys_semcreate(void)
+{
+  struct semaphore *s;
+  int val;
+  argptr(0, (void *)&s, sizeof(s));
+  argint(1, &val);
+  initsemaphore(s, val);
+  return 0;
+}
+
+int sys_semacquire(void)
+{
+  struct semaphore *s;
+  argptr(0, (void *)&s, sizeof(s));
+  acquiresemaphore(s);
+  return 0;
+}
+
+int sys_semrelease(void)
+{
+  struct semaphore *s;
+  argptr(0, (void *)&s, sizeof(s));
+  releasesemaphore(s);
+  return 0;
+}

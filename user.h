@@ -1,5 +1,6 @@
 struct stat;
 struct rtcdate;
+struct semaphore;
 
 // system calls
 int fork(void);
@@ -30,6 +31,9 @@ int thread_join(void **stack);
 int mtx_create(int locked);
 int mtx_lock(int lock_id);
 int mtx_unlock(int lock_id);
+int sem_create(struct semaphore*, int);
+int sem_acquire(struct semaphore*);
+int sem_release(struct semaphore*);
 
 // ulib.c
 int stat(const char*, struct stat*);

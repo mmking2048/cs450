@@ -3,9 +3,10 @@
 #include "param.h"
 #include "memlayout.h"
 #include "mmu.h"
-#include "x86.h"
 #include "proc.h"
+#include "semaphore.h"
 #include "spinlock.h"
+#include "x86.h"
 
 struct {
   struct spinlock lock;
